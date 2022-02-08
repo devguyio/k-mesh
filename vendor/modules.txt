@@ -113,6 +113,10 @@ github.com/hashicorp/golang-lru/simplelru
 github.com/imdario/mergo
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
+# github.com/jedib0t/go-pretty/v6 v6.2.7
+## explicit
+github.com/jedib0t/go-pretty/v6/table
+github.com/jedib0t/go-pretty/v6/text
 # github.com/josharian/intern v1.0.0
 github.com/josharian/intern
 # github.com/json-iterator/go v1.1.11
@@ -122,10 +126,13 @@ github.com/kelseyhightower/envconfig
 # github.com/magefile/mage v1.12.1
 ## explicit
 github.com/magefile/mage/mg
+github.com/magefile/mage/sh
 # github.com/mailru/easyjson v0.7.7
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
+# github.com/mattn/go-runewidth v0.0.13
+github.com/mattn/go-runewidth
 # github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
@@ -155,6 +162,8 @@ github.com/prometheus/statsd_exporter/pkg/mapper/fsm
 github.com/rickb777/date/period
 # github.com/rickb777/plural v1.2.1
 github.com/rickb777/plural
+# github.com/rivo/uniseg v0.2.0
+github.com/rivo/uniseg
 # github.com/robfig/cron/v3 v3.0.1
 github.com/robfig/cron/v3
 # github.com/spf13/cobra v1.1.3
