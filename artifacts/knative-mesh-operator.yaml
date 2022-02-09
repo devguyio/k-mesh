@@ -833,7 +833,7 @@ spec:
         - name: controller
           # This is the Go import path for the binary that is containerized
           # and substituted here.
-          image: kind.local/controller-5a88483770de11713a12dfef3e122cf6:2599104048f3fc76707c10f57a47a50e4776d5f04c9cd036c1d97e550e2d1d8c
+          image: kind.local/controller-5a88483770de11713a12dfef3e122cf6:34a9e7965e63698c8cec51afe5b032951c688104bb4eb3538c51e5efa333cc0b
           resources:
             requests:
               cpu: 100m
@@ -913,7 +913,7 @@ spec:
         - name: webhook
           # This is the Go import path for the binary that is containerized
           # and substituted here.
-          image: kind.local/webhook-8dcd8242da08c13e4a2fea6af8f1e35f:6956f2cb3c61031d54a5ca6ecc16124c2e02b1b8c095b82d83f868fe71f43807
+          image: kind.local/webhook-8dcd8242da08c13e4a2fea6af8f1e35f:f627d68c708fa06fb3c5ee905b4ddefbcddb876da89469a5d23878d30f910ba9
           resources:
             requests:
               cpu: 20m

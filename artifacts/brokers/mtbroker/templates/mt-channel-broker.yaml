@@ -570,7 +570,6 @@ spec:
       targetPort: 9092
   selector:
     eventing.knative.dev/brokerRole: ingress
-    app.kubernetes.io/instance: {{ .Release.Name }}
 
 ---
 # Copyright 2020 The Knative Authors
