@@ -1,0 +1,357 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: d-project
+---
+apiVersion: eventing.knative.dev/v1
+kind: Broker
+metadata:
+  name: "default"
+  namespace: d-project
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifier
+  namespace: d-project
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &labels
+      app: notifier
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      containers:
+        - name: event-display
+          image: gcr.io/knative-releases/knative.dev/eventing/cmd/event_display
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: notifier
+  namespace: d-project
+spec:
+  selector:
+    app: notifier
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: notifier-trigger
+  namespace: d-project
+  annotations:
+    knative-eventing-injection: enabled
+spec:
+  broker: default
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: notifier
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailer
+  namespace: d-project
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &labels
+      app: mailer
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      containers:
+        - name: event-display
+          image: gcr.io/knative-releases/knative.dev/eventing/cmd/event_display
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: mailer
+  namespace: d-project
+spec:
+  selector:
+    app: mailer
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: mailer-trigger
+  namespace: d-project
+  annotations:
+    knative-eventing-injection: enabled
+spec:
+  broker: default
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: mailer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: classifier
+  namespace: d-project
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &labels
+      app: classifier
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      containers:
+        - name: event-display
+          image: gcr.io/knative-releases/knative.dev/eventing/cmd/event_display
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: classifier
+  namespace: d-project
+spec:
+  selector:
+    app: classifier
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: classifier-trigger
+  namespace: d-project
+  annotations:
+    knative-eventing-injection: enabled
+spec:
+  broker: default
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: classifier
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: c-project
+---
+apiVersion: eventing.knative.dev/v1
+kind: Broker
+metadata:
+  name: "default"
+  namespace: c-project
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifier
+  namespace: c-project
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &labels
+      app: notifier
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      containers:
+        - name: event-display
+          image: gcr.io/knative-releases/knative.dev/eventing/cmd/event_display
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: notifier
+  namespace: c-project
+spec:
+  selector:
+    app: notifier
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: notifier-trigger
+  namespace: c-project
+  annotations:
+    knative-eventing-injection: enabled
+spec:
+  broker: default
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: notifier
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailer
+  namespace: c-project
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &labels
+      app: mailer
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      containers:
+        - name: event-display
+          image: gcr.io/knative-releases/knative.dev/eventing/cmd/event_display
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: mailer
+  namespace: c-project
+spec:
+  selector:
+    app: mailer
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: mailer-trigger
+  namespace: c-project
+  annotations:
+    knative-eventing-injection: enabled
+spec:
+  broker: default
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: mailer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: classifier
+  namespace: c-project
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &labels
+      app: classifier
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      containers:
+        - name: event-display
+          image: gcr.io/knative-releases/knative.dev/eventing/cmd/event_display
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: classifier
+  namespace: c-project
+spec:
+  selector:
+    app: classifier
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: classifier-trigger
+  namespace: c-project
+  annotations:
+    knative-eventing-injection: enabled
+spec:
+  broker: default
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: classifier
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dedup
+  namespace: c-project
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &labels
+      app: dedup
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      containers:
+        - name: event-display
+          image: gcr.io/knative-releases/knative.dev/eventing/cmd/event_display
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: dedup
+  namespace: c-project
+spec:
+  selector:
+    app: dedup
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: dedup-trigger
+  namespace: c-project
+  annotations:
+    knative-eventing-injection: enabled
+spec:
+  broker: default
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: dedup

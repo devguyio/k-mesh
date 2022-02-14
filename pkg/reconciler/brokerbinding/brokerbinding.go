@@ -26,7 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
-	brokerinformersv1 "knative.dev/eventing/pkg/client/informers/externalversions/eventing/v1"
+	v1eventinginformers "knative.dev/eventing/pkg/client/informers/externalversions/eventing/v1"
 	"knative.dev/pkg/apis/duck"
 	v1 "knative.dev/pkg/apis/duck/v1"
 	"knative.dev/pkg/logging"
@@ -47,23 +47,31 @@ const podOwnerLabelKey = mesh.GroupName + "/podOwner"
 type BrokersCache map[types.UID]v1.KReference
 
 type BrokerBindingCache struct {
-	brokerRefs BrokersCache
+	brokerRefs    BrokersCache
+	brokerBinding *v1alpha1.BrokerBinding
+}
+type TriggersCache map[types.UID]v1.KReference
+
+type TriggerBrokerCache struct {
+	triggerRefs   TriggersCache
 	brokerBinding *v1alpha1.BrokerBinding
 }
 
 // Reconciler implements brokerbinding.Interface for
 // BrokerBinding resources.
 type Reconciler struct {
-	cacheLock	sync.RWMutex
+	cacheLock sync.RWMutex
 	// Current observed broker classes
-	kmeshCache     map[types.UID][]string
+	kmeshCache map[types.UID][]string
 	// class -> broker
-	trackedBrokers  map[string]BrokerBindingCache
-	kmeshClientSet clientmeshv1alpha1.MeshV1alpha1Interface
-	kmeshInformer  informerkmeshv1alpha1.KMeshInformer
-	brokerInformer brokerinformersv1.BrokerInformer
-	uriResolver    *resolver.URIResolver
-
+	trackedBrokers map[string]BrokerBindingCache
+	// key "mynamespace/broker1" value: list[trigger]
+	trackedTriggers map[string]TriggerBrokerCache
+	kmeshClientSet  clientmeshv1alpha1.MeshV1alpha1Interface
+	kmeshInformer   informerkmeshv1alpha1.KMeshInformer
+	brokerInformer  v1eventinginformers.BrokerInformer
+	triggerInformer v1eventinginformers.TriggerInformer
+	uriResolver     *resolver.URIResolver
 }
 
 //// Check that our Reconciler implements Interface
@@ -82,7 +90,7 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, brokerBinding *v1alpha1.
 	return nil
 }
 
-func (r *Reconciler) reconcileKMesh(ctx context.Context, brokerBinding *v1alpha1.BrokerBinding, logger *zap.SugaredLogger) (*v1alpha1.KMesh, error){
+func (r *Reconciler) reconcileKMesh(ctx context.Context, brokerBinding *v1alpha1.BrokerBinding, logger *zap.SugaredLogger) (*v1alpha1.KMesh, error) {
 	wantKmesh := brokerBinding.Spec.Kmesh
 	//TODO Check group version of wanted kmesh
 	kmesh, err := r.kmeshInformer.Lister().KMeshes(wantKmesh.Namespace).Get(wantKmesh.Name)
@@ -91,7 +99,7 @@ func (r *Reconciler) reconcileKMesh(ctx context.Context, brokerBinding *v1alpha1
 		brokerBinding.Status.MarkBindingNotReadyWithDetails("Failed to find KMesh", "Error getting KMesh: %s/%s(%s.%s)", wantKmesh.Namespace, wantKmesh.Name, wantKmesh.APIVersion, wantKmesh.APIVersion)
 		return nil, err
 	}
-	func (){
+	func() {
 		r.cacheLock.Lock()
 		defer r.cacheLock.Unlock()
 		if classes, ok := r.kmeshCache[kmesh.UID]; !ok {
@@ -152,21 +160,21 @@ func (r *Reconciler) reconcileIngresses(ctx context.Context, brokerBinding *v1al
 	r.cacheLock.Lock()
 	defer r.cacheLock.Unlock()
 	logger := logging.FromContext(ctx)
-	ingressList := make([]v1alpha1.Ingress,0,0)
+	ingressList := make([]v1alpha1.Ingress, 0, 0)
 
-	for _, c := range r.kmeshCache[kmesh.UID]{
+	for _, c := range r.kmeshCache[kmesh.UID] {
 		bindingCache, ok := r.trackedBrokers[c]
 		if !ok {
 			bindingCache = BrokerBindingCache{
 				brokerBinding: brokerBinding,
-				brokerRefs: map[types.UID]v1.KReference{},
+				brokerRefs:    map[types.UID]v1.KReference{},
 			}
 		}
 		for buid, bref := range bindingCache.brokerRefs {
 			b, err := r.brokerInformer.Lister().Brokers(bref.Namespace).Get(bref.Name)
 			if err != nil {
 				if errors.IsNotFound(err) {
-					logger.Debugw("Broker no longer exists, removing ingress", zap.String("broker", bref.Name), zap.String("namespace", bref.Namespace) , zap.String("kmesh", kmesh.GetName()))
+					logger.Debugw("Broker no longer exists, removing ingress", zap.String("broker", bref.Name), zap.String("namespace", bref.Namespace), zap.String("kmesh", kmesh.GetName()))
 					delete(bindingCache.brokerRefs, buid)
 					continue
 				} else {
@@ -174,12 +182,55 @@ func (r *Reconciler) reconcileIngresses(ctx context.Context, brokerBinding *v1al
 					return nil, fmt.Errorf("error retrieving broker %s/%s: %w", bref.Namespace, bref.Namespace, err)
 				}
 			}
-			if b.IsReady(){
-				logger.Debugw("Broker is ready,adding ingress", zap.String("broker", bref.Name), zap.String("namespace", bref.Namespace) , zap.String("kmesh", kmesh.GetName()), zap.Any("address", b.Status.Address))
-				ingressList = append(ingressList, v1alpha1.Ingress{
-					Name: fmt.Sprintf("%s/%s", bref.Namespace, bref.Name),
+			if b.IsReady() {
+				ingress := v1alpha1.Ingress{
+					Name:    fmt.Sprintf("%s/%s", bref.Namespace, bref.Name),
 					Address: &b.Status.Address,
-				})
+				}
+				egressList := make([]v1alpha1.Egress, 0, 0)
+				logger.Debugw("Broker is ready,adding ingress", zap.String("broker", bref.Name), zap.String("namespace", bref.Namespace), zap.String("kmesh", kmesh.GetName()), zap.Any("address", b.Status.Address))
+				key := fmt.Sprintf("%s/%s", bref.Namespace, bref.Name)
+				triggersCache, ok := r.trackedTriggers[key]
+				if !ok {
+					logger.Debugw("INGREZ 1")
+					triggersCache = TriggerBrokerCache{
+						triggerRefs:   map[types.UID]v1.KReference{},
+						brokerBinding: brokerBinding,
+					}
+				}
+				logger.Infow("Will update cache trigger cache", zap.Any("cache", triggersCache), zap.String("key", key), zap.Any("trackedTrigger", r.trackedTriggers), zap.Any("triggersRef", triggersCache.triggerRefs),
+					zap.Any("binding", triggersCache.brokerBinding), zap.Bool("ok", ok))
+				for tuid, tref := range triggersCache.triggerRefs {
+					logger.Debugw("INGREZ 2")
+					t, err := r.triggerInformer.Lister().Triggers(tref.Namespace).Get(tref.Name)
+					if err != nil {
+						logger.Debugw("INGREZ 2")
+						if errors.IsNotFound(err) {
+							logger.Debugw("Trigger no longer exists, removing egress",
+								zap.String("trigger", tref.Name), zap.String("broker", bref.Name),
+								zap.String("namespace", bref.Namespace), zap.String("kmesh", kmesh.GetName()))
+							delete(triggersCache.triggerRefs, tuid)
+							continue
+						} else {
+							logger.Errorw("Error getting trigger", zap.Error(err),
+								zap.String("trigger", tref.Name), zap.String("broker", bref.Name),
+								zap.String("namespace", bref.Namespace))
+							return nil, fmt.Errorf("error retrieving trigger %s/%s (broker: %s): %w",
+								tref.Namespace, tref.Name, bref.Name, err)
+						}
+					}
+					if t.Status.IsReady() {
+						egressList = append(egressList, v1alpha1.Egress{
+							Name:        fmt.Sprintf("%s/%s", tref.Namespace, tref.Name),
+							Destination: &t.Spec.Subscriber,
+						})
+						logger.Debugw("Trigger is ready,adding egress", zap.String("trigger", tref.Name), zap.String("broker", bref.Name), zap.String("namespace", bref.Namespace), zap.String("kmesh", kmesh.GetName()), zap.Any("egress", t.Status.SubscriberURI), zap.Any("subscriber", t.Spec.Subscriber), zap.Any("egressList", egressList))
+					}
+				}
+				ingress.Egresses = egressList
+				logger.Infow("Adding trigger cache", zap.Any("cache", triggersCache), zap.String("key", key), zap.Any("trackedTrigger", r.trackedTriggers), zap.Any("ingress", ingress))
+				ingressList = append(ingressList, ingress)
+				r.trackedTriggers[key] = triggersCache
 			}
 		}
 		r.trackedBrokers[c] = bindingCache

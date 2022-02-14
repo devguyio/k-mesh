@@ -116,4 +116,6 @@ rules:
     resources:
       - "brokers"
       - "brokers/status"
+      - "triggers"
+      - "triggers/status"
     verbs: ["create", "get", "list", "update", "delete", "watch", "patch"]

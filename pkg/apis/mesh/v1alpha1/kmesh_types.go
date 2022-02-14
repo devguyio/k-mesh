@@ -56,6 +56,18 @@ const (
 
 type Ingresses []Ingress
 
+type Egresses []Egress
+
+type Egress struct {
+	// Destination holds the information needed to send events to.
+	// +optional
+	Destination *duckv1.Destination `json:"destination,omitempty"`
+
+	// Name is the event ingress name
+	// +optional
+	Name string `json:"name,omitempty"`
+}
+
 // Ingress is an endpoint which receives Cloud Events for ingressing into the K-Mesh
 type Ingress struct {
 	// Address holds the information needed to connect this Addressable up to receive events.
@@ -65,6 +77,10 @@ type Ingress struct {
 	// Name is the event ingress name
 	// +optional
 	Name string `json:"name,omitempty"`
+
+	// Egresses The list of events egress endpoints this ingress is connected to.
+	// +optional
+	Egresses Egresses `json:"egresses,omitempty"`
 }
 
 // KMeshStatus communicates the observed state of the KMesh (from the controller).

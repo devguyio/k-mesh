@@ -1,0 +1,13 @@
+apiVersion: mesh.knative.dev/v1alpha1
+kind: BrokerBinding
+metadata:
+  name: mtbroker
+  namespace: knative-eventing
+spec:
+  classes:
+    - MTChannelBasedBroker
+  kmesh:
+    apiVersion: mesh.knative.dev/v1alpha1
+    kind: KMesh
+    name: default
+    namespace: knative-mesh

@@ -6,6 +6,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.2.7
 	github.com/magefile/mage v1.12.1
 	go.uber.org/zap v1.19.1
+	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.22.5
 	k8s.io/apimachinery v0.22.5
 	k8s.io/client-go v0.22.5

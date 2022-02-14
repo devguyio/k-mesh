@@ -1,0 +1,5 @@
+apiVersion: mesh.knative.dev/v1alpha1
+kind: KMesh
+metadata:
+  name: default
+  namespace: knative-mesh

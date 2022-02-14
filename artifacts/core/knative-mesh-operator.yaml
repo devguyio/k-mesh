@@ -129,6 +129,8 @@ rules:
     resources:
       - "brokers"
       - "brokers/status"
+      - "triggers"
+      - "triggers/status"
     verbs: ["create", "get", "list", "update", "delete", "watch", "patch"]
 
 ---
@@ -833,7 +835,7 @@ spec:
         - name: controller
           # This is the Go import path for the binary that is containerized
           # and substituted here.
-          image: kind.local/controller-5a88483770de11713a12dfef3e122cf6:34a9e7965e63698c8cec51afe5b032951c688104bb4eb3538c51e5efa333cc0b
+          image: quay.io/devguyio/controller@sha256:9f3d64dbfb4341d769a9d246e5e79ed944780caca4f35524392ec7bfa591713a
           resources:
             requests:
               cpu: 100m
@@ -913,7 +915,7 @@ spec:
         - name: webhook
           # This is the Go import path for the binary that is containerized
           # and substituted here.
-          image: kind.local/webhook-8dcd8242da08c13e4a2fea6af8f1e35f:f627d68c708fa06fb3c5ee905b4ddefbcddb876da89469a5d23878d30f910ba9
+          image: quay.io/devguyio/webhook@sha256:0f66dc5a2589593931101c777482a43ff7f33a6bcff3ae2b8c913cae30003a62
           resources:
             requests:
               cpu: 20m
